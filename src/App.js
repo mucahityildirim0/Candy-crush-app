@@ -5,9 +5,11 @@ const candyColors = ["blue", "orange", "green", "purple", "red", "yellow"];
 
 const App = () => {
   const [currentColorArrangment, setCurrentColorArrangment] = useState([]);
+  const [squareBeingDragged, setSquareBeingDragged] = useState(null);
+  const [squareBeingReplaced, setSquareBeingRepcaled] = useState(null);
 
   const checkForColumnOfFour = () => {
-    for (let i = 0; i < 39; i++) {
+    for (let i = 0; i <= 39; i++) {
       const columnOfFour = [i, i + width * 2, i + width * 3];
       const decidedColor = currentColorArrangment[i];
 
@@ -18,6 +20,7 @@ const App = () => {
       ) {
         columnOfFour.forEach((square) => (currentColorArrangment[square] = ""));
       }
+      return true;
     }
   };
 
@@ -37,7 +40,7 @@ const App = () => {
   };
 
   const checkForColumnOfThree = () => {
-    for (let i = 0; i < 47; i++) {
+    for (let i = 0; i <= 47; i++) {
       const columnOfThree = [i, i + width, i + width * 2];
       const decidedColor = currentColorArrangment[i];
 
@@ -49,6 +52,7 @@ const App = () => {
         columnOfThree.forEach(
           (square) => (currentColorArrangment[square] = "")
         );
+        return true;
       }
     }
   };
@@ -71,11 +75,12 @@ const App = () => {
       ) {
         rowOfThree.forEach((square) => (currentColorArrangment[square] = ""));
       }
+      return true;
     }
   };
 
   const moveIntoSquareBelow = () => {
-    for (let i = 0; i < 64 - width; i++) {
+    for (let i = 0; i <= 55; i++) {
       const firstRow = [0, 1, 2, 4, 5, 6, 7];
       const isFirstRow = firstRow.includes(i);
 
@@ -88,6 +93,62 @@ const App = () => {
         currentColorArrangment[i + width] = currentColorArrangment[i];
         currentColorArrangment[i] = "";
       }
+      return true;
+    }
+  };
+
+  const dragStart = (e) => {
+    console.log("drag start");
+    setSquareBeingDragged(e.target);
+  };
+
+  const dragDrop = (e) => {
+    console.log("drag drop");
+    setSquareBeingRepcaled(e.target);
+  };
+
+  const dragEnd = (e) => {
+    console.log("drag end");
+
+    const squareBeingDraggedId = parseInt(
+      squareBeingDragged.getAttribute("data-id")
+    );
+    const squareBeingReplacedId = parseInt(
+      squareBeingReplaced.getAttribute("data-id")
+    );
+
+    currentColorArrangment[squareBeingReplacedId] =
+      squareBeingDragged.style.backgroundColor;
+    currentColorArrangment[squareBeingDraggedId] =
+      squareBeingReplaced.style.backgroundColor;
+
+    const validMoves = [
+      squareBeingDraggedId - 1,
+      squareBeingDraggedId - width,
+      squareBeingDraggedId + 1,
+      squareBeingDraggedId + width,
+    ];
+
+    const validMove = validMoves.includes(squareBeingReplacedId);
+
+    const isAColumnOfFour = checkForColumnOfFour();
+    const isARowOfFour = checkForRowOfFour();
+    const isAColumnOfThree = checkForColumnOfThree();
+    const isARowOfThree = checkForRowOfThree();
+
+    if (
+      squareBeingReplacedId &&
+      validMove &&
+      (isARowOfThree || isARowOfFour || isAColumnOfFour || isAColumnOfThree)
+    ) {
+      setSquareBeingDragged(null);
+      setSquareBeingRepcaled(null);
+    } else {
+      currentColorArrangment[squareBeingReplacedId] =
+        squareBeingReplaced.style.backgroundColor;
+      currentColorArrangment[squareBeingDraggedId] =
+        squareBeingDragged.style.backgroundColor;
+      setCurrentColorArrangment([...currentColorArrangment]);
     }
   };
 
@@ -123,8 +184,6 @@ const App = () => {
     currentColorArrangment,
   ]);
 
-  console.log(currentColorArrangment);
-
   return (
     <div className="app">
       <div className="game">
@@ -133,6 +192,14 @@ const App = () => {
             key={index}
             alt={candyColor}
             style={{ backgroundColor: candyColor }}
+            data-id={index}
+            draggable={true}
+            onDragStart={dragStart}
+            onDragOver={(e: DragEvent<HTMLImageElement>) => e.preventDefault()}
+            onDragEnter={(e: DragEvent<HTMLImageElement>) => e.preventDefault()}
+            onDragLeave={(e: DragEvent<HTMLImageElement>) => e.preventDefault()}
+            onDrop={dragDrop}
+            onDragEnd={dragEnd}
           />
         ))}
       </div>
